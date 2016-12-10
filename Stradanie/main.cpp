@@ -8,7 +8,6 @@
 #include "include\SDL\SDL_mixer.h"
 #include <cmath>
 #include <ctime>
-#include <mmsystem.h>
 #include <Windows.h>
 
 #pragma comment(lib, "Glaux.lib")
@@ -24,6 +23,9 @@ GLuint textures[14];
 
 using namespace std;
 
+//Delete console 
+#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
+
 struct Player {
 	int score;
 	int distance;
@@ -34,6 +36,7 @@ bool Up = false, Down = false, Right = false, Left = false, collide = false,fail
 bool homeMainResum = false, menuSelectColorbool = false, randomchikforznak=true;
 bool firstStrip = true, secondtStrip = true, thirdStrip = true, forthtStrip = true;
 bool bonus = false,checkrandombonus=true, downDistance=false; // все зависит от рандома, получишь бонус или нет?
+bool topfiveYou = false;
 int movddline = 0;
 int randomchikEcheRaz = 0, randomchikDlyaBonusa = 0, randombonus=0;
 int _50vs100 = 0;
@@ -64,7 +67,7 @@ Mix_Chunk *bonussound = NULL;
 
 void MainDraw();
 void loadfile(Player *array);
-void savefile(Player *array);
+void savefile(Player *array, int chek);
 void sortBub(Player *array);
 void mainBackground();//fon
 void drawCar();//draw machine
@@ -139,7 +142,7 @@ void Initialize()
 	LoadTexture("pics/topfive.png", 13);
 	srand(time(NULL));
 	Mix_OpenAudio(22050, AUDIO_S16SYS, 2, 4096);
-	//music = Mix_LoadMUS("sound/t1.wav");
+	music = Mix_LoadMUS("sound/t2.wav");
 	fail = Mix_LoadWAV("sound/fail.wav");
 	chooisesound = Mix_LoadWAV("sound/chooise.wav");
 	collidewithCar = Mix_LoadWAV("sound/SOUND_REVERB_CAR_SCREECH_28000.wav");
@@ -147,11 +150,6 @@ void Initialize()
 	bonussound = Mix_LoadWAV("sound/bonus.wav");
 	playArray= new Player[5];
 	loadfile(playArray);
-	for (int i(0); i < 5; i++) {
-		cout << "score[" << i << "]: " << playArray[i].score << endl;
-		cout << "dist[" << i << "]: " << playArray[i].distance << endl;
-		cout << endl;
-	}
 }
 
 void sortBub(Player *array) {
@@ -169,9 +167,10 @@ void sortBub(Player *array) {
 
 void loadfile(Player *array) {
 	ifstream fin;
-	fin.open("result.txt");
+	fin.open("result.bin");
 	if (!fin.is_open()) {
-		cout << "Error" << endl;
+		savefile(array, 1);
+		loadfile(array);
 		return;
 	}
 	int temp;
@@ -192,16 +191,28 @@ void loadfile(Player *array) {
 	fin.close();
 }
 
-void savefile(Player *array) {
+void savefile(Player *array, int chek) {
 	ofstream fout;
-	fout.open("result.txt");
+	fout.open("result.bin");
 	if (!fout.is_open()) {
-		cout << "Error" << endl;
+		cout << "error" << endl;
 		return;
 	}
-	for (int i(0); i < 5; i++) {
-		fout << array[i].score << endl;
-		fout << array[i].distance << endl;
+	if (chek == 1) {
+		for (int i(0); i < 5; i++) {
+			fout << 0 << endl;
+			if (i == 4) {
+				fout << 0;
+			}
+			else
+				fout << 0 << endl;
+		}
+	}
+	else {
+		for (int i(0); i < 5; i++) {
+			fout << array[i].score << endl;
+			fout << array[i].distance << endl;
+		}
 	}
 	fout.close();
 }
@@ -212,7 +223,7 @@ void addtableRecord(int score, int dist, Player *arrayP) {
 		arrayP[4].distance = dist;
 	}
 	sortBub(arrayP);
-	savefile(arrayP);
+	savefile(arrayP,0);
 }
 
 void LoadTexture(char *filename, int pos)
@@ -530,15 +541,15 @@ void gamePlay() {
 	char buffer[10];
 	glColor3f(1, 1, 1);
 	if (!collide) {
-		drawText("Score: ", 740, 570);
+		drawText("Score: ", 730, 570);
 		_itoa(score, buffer, 10);
 		drawTextNum(buffer, 4, 800, 570);
 		glColor3f(1, 1, 1);
-		drawText("Speed: ", 30, 570);
+		drawText("Speed: ", 20, 570);
 		_itoa(speed, buffer, 10);
 		drawTextNum(buffer, 3, 90, 570);
 		glColor3f(1, 1, 1);
-		drawText("Distance: ", 30, 540);
+		drawText("Distance: ", 20, 540);
 		_itoa(distanceCar, buffer, 10);
 		drawTextNum(buffer, 5, 115, 540);
 	}
@@ -548,11 +559,12 @@ void gamePlay() {
 			Mix_PlayChannel(-1, collidewithCar, 0);
 			collidewithCarSound = true;
 		}
+		topfiveYou = false;
 		glColor3f(1, 1, 1);
 		gameOverBackground(270, 510);
-		drawText("Your score: ", 380, 470);
+		drawText("Your score: ", 375, 470);
 		_itoa(score, buffer, 10);
-		drawTextNum(buffer, 4, 480, 470);
+		drawTextNum(buffer, 4, 490, 470);
 		drawText("If you want to restart, press \"Enter\"  ", 310, 140);
 		drawText("To return to the menu, press \"Esc\" ", 310, 110);
 		speed = 0;
@@ -564,9 +576,6 @@ void gamePlay() {
 			drawText("Score ", 375, 380);
 			drawText("Distance ", 485, 380);
 			for (int i(0); i < 5; i++) {
-				cout << "score[" << i << "]: " << playArray[i].score << endl;
-				cout << "dist[" << i << "]: " << playArray[i].distance << endl;
-				cout << endl;
 				_itoa(i+1, buffer, 10);
 				drawTextNum(buffer, 1, 355, 350 - 35 * i);
 				drawText(". ", 365, 350 - 35 * i);
@@ -575,7 +584,9 @@ void gamePlay() {
 				_itoa(playArray[i].distance, buffer, 10);
 				drawTextNum(buffer, 5, 495, 350-35*i);
 				if (score == playArray[i].score) {
-					drawText("You ", 310, 350 - 35 * i);
+					if(!topfiveYou)
+					drawText("You ", 300, 350 - 35 * i);
+					topfiveYou = true;
 				}
 			}
 		Mix_PauseMusic();
@@ -1024,7 +1035,7 @@ void drawText(char ch[], int xpos, int ypos) {
 	glLoadIdentity();
 	glRasterPos2f(xpos, ypos);
 	for (int i = 0; i<numofochar - 1; i++) {
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, ch[i]);
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ch[i]);
 	}
 }
 
@@ -1034,11 +1045,11 @@ void drawTextNum(char ch[], int numtext, int xpos, int ypos) {
 	glRasterPos2f(xpos, ypos);
 	for (int i = 0; i <= numtext - 1; i++) {
 		if (i<len) {
-			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, '0');
+			glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, '0');
 		}
 		else
 		{
-			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, ch[k]);
+			glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ch[k]);
 			k++;
 		}
 	}
