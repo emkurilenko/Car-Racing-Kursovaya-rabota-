@@ -44,7 +44,7 @@ int distanceCar = 0;
 float mCarX = 234.0, mCarY = 10.0; 
 float bCarX[4] = { 234,234,350,350 }, bCarY[4] = {710};
 float bonusY = 700, bonusX = 350;
-float speed = 2.5;
+float speed = 0, alpha = 1, levelELH = 2;
 float decc = 0.3, turnSpeed = 0.08;
 float xTriangle = 119.0;
 int random = 0, score = 0;
@@ -55,7 +55,7 @@ float znackX = 70;
 Player *playArray;
 
 char buffCar[20]="pics/blue.png";
-char buffRoad[20] = "pics/road.jpg";
+char buffRoad[20] = "pics/road3.png";
 char buffBonus[20] = "pics/50bonus.png";
 
 Mix_Music *music = NULL;
@@ -129,7 +129,7 @@ void Initialize()
 	glEnable(GL_ALPHA_TEST);
 	glGenTextures(16, textures);
 	LoadTexture(buffCar, 0);
-	LoadTexture("pics/water.jpg", 1);
+	LoadTexture("pics/grass5.png", 1);
 	LoadTexture("pics/whitecolor.png", 2);
 	LoadTexture(buffRoad, 3);
 	LoadTexture("pics/mainbackground.png", 4);
@@ -535,6 +535,24 @@ void processNormalKeys(unsigned char key, int x, int y) {
 		speed=speed*0.5;
 		break;
 	}
+	case 49: {
+		if (collide) {
+			levelELH = 1;
+		}
+		break;
+	}
+	case 50: {
+		if (collide) {
+			levelELH = 2;
+		 }
+	 break; 
+	}
+	case 51: {
+		if (collide) {
+			levelELH = 3;
+		}
+		break;
+	}
 	}
 }
 
@@ -585,6 +603,13 @@ void gamePlay() {
 		drawText("Distance: ", 20, 540);
 		_itoa(distanceCar, buffer, 10);
 		drawTextNum(buffer, 5, 115, 540);
+		if (levelELH == 1) {
+			drawText("Easy ", 20, 515);
+		}
+		if (levelELH == 2)
+		drawText("Normal ", 20, 515);
+		if (levelELH == 3)
+		drawText("Hight ", 20, 515);
 	}
 	glColor3f(0, 1, 0);
 	if (collide) {
@@ -600,6 +625,10 @@ void gamePlay() {
 		drawTextNum(buffer, 4, 490, 490);
 		drawText("If you want to restart, press \"Enter\"  ", 310, 140);
 		drawText("To return to the menu, press \"Esc\" ", 310, 110);
+		drawText("Difficulty level ", 20, 140);
+		drawText("Easy - 1 ", 20, 115);
+		drawText("Normal - 2 ", 20, 95);
+		drawText("Hight - 3 ", 20, 75);
 		speed = 0;
 		topfivebackground(350, 385);
 		if (!addTableRecord) {
@@ -645,6 +674,15 @@ void restartgameplay()
 	 randomchikDlyaBonusa = 0;
 	 randomselectcolor = rand() % 6 + 1;
 	 otherPositionBarrier();
+	 if (levelELH == 1) {
+		 alpha = 0.7;
+	 }
+	 if (levelELH == 2) {
+		 alpha = 1;
+	 }
+	 if (levelELH == 3) {
+		 alpha = 1.5;
+	 }
 	 failsound = false;
 	 collidewithCarSound = false;
 	 bonus = false;
@@ -661,17 +699,17 @@ void randomBarrier() {
 					downDistance = true;
 				}
 				if (speed > 5) {
-					bCarY[i] = bCarY[i] - 10;
+					bCarY[i] = bCarY[i] - 10*alpha;
 				}
 				if (speed < 5) {
-					bCarY[i] = bCarY[i] - 10 + abs(speed);
+					bCarY[i] = bCarY[i] - 10 * alpha + abs(speed);
 				}
 				if (speed < -18 && (distanceCar - bufDistanceCar)>100) {
-					bCarY[i] = bCarY[i] - 35;
+					bCarY[i] = bCarY[i] - 35 * alpha;
 				}
 			}
 			else {
-				bCarY[i] = bCarY[i] - 15 - 0.9*speed;
+				bCarY[i] = bCarY[i] - 15 * alpha - 0.9*speed;
 			}
 
 			random = rand() % 4 + 1;
@@ -778,13 +816,13 @@ void drawBarrier(float bCarX, float bCarY) {
 	if (randomselectcolor == 2)
 		glColor3f(0.8913, 0.5481, 0.000);
 	if (randomselectcolor == 3)
-		glColor3f(0.000, 0.289, 0.0478);
+		glColor3ub(2, 148, 26);
 	if (randomselectcolor == 4)
 		glColor3f(0.4879, 0.7156, 0.2159);
 	if (randomselectcolor == 5)
-		glColor3f(0.6941, 0.0152, 0.0078);
+		glColor3ub(230, 3, 2);
 	if (randomselectcolor == 6)
-		glColor3f(0.000, 0.2048, 0.5481);
+		glColor3ub(0.000, 60, 165);
 	glTexCoord2d(0, 0);	glVertex3f(0, 10, 0);
 	glTexCoord2d(1, 0); glVertex3f(88, 10, 0);
 	glTexCoord2d(1, 1); glVertex3f(88, 120, 0);
@@ -901,10 +939,10 @@ void roadDraw() {
 		if (i == 0) {
 			k = -100;
 		}
-		glTexCoord2d(0, 0);	 glVertex3f(200.0, k + i * 300 - 50 * i, 0.0);
-		glTexCoord2d(0, 1);	 glVertex3f(700.0, k + i * 300 - 50 * i, 0.0);
-		glTexCoord2d(1, 1);	 glVertex3f(700.0, k + i * 300 + 300 - 50 * i, 0.0);
-		glTexCoord2d(1, 0); ; glVertex3f(200.0, k + i * 300 + 300 - 50 * i, 0.0);
+		glTexCoord2d(0, 0);	 glVertex3f(200.0, k + i * 300 , 0.0);
+		glTexCoord2d(0, 1);	 glVertex3f(700.0, k + i * 300 , 0.0);
+		glTexCoord2d(1, 1);	 glVertex3f(700.0, k + i * 300 + 300 , 0.0);
+		glTexCoord2d(1, 0); ; glVertex3f(200.0, k + i * 300 + 300, 0.0);
 		glEnd();
 	}
 
@@ -1011,7 +1049,7 @@ void freeInitialise()
 	Mix_FreeMusic(music);
 
 	Mix_CloseAudio();
-	glDeleteTextures(14, textures);
+	glDeleteTextures(16, textures);
 }
 
 void selectcolor()
