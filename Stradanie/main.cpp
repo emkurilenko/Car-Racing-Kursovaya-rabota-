@@ -19,12 +19,12 @@
 #pragma comment(lib, "SDL2main.lib")
 #pragma comment(lib, "SDL2test.lib")
 
-GLuint textures[16];
+GLuint textures[18];
 
 using namespace std;
 
 //Delete console 
-//#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
+#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 
 struct Player {
 	int score;
@@ -33,10 +33,10 @@ struct Player {
 
 int WinWidth = 900, WinHeight = 660;
 bool Up = false, Down = false, Right = false, Left = false, collide = false,failsound = false, collidewithCarSound=false, chooseGame=false, addTableRecord = false;
-bool homeMainResum = false, menuSelectColorbool = false, menuRecordsTable = false, randomchikforznak=true;
+bool homeMainResum = false, menuSelectColorbool = false, menuRecordsTable = false, menuHelpControl = false, randomchikforznak=true;
 bool firstStrip = true, secondtStrip = true, thirdStrip = true, forthtStrip = true;
 bool bonus = false,checkrandombonus=true, downDistance=false; // все зависит от рандома, получишь бонус или нет?
-bool topfiveYou = false;
+bool topfiveYou = false, loadTexturebool = false, loadmap = false;
 int movddline = 0;
 int randomchikEcheRaz = 0, randomchikDlyaBonusa = 0, randombonus=0;
 int _50vs100 = 0;
@@ -48,8 +48,8 @@ float speed = 0, alpha = 1, levelELH = 2;
 float decc = 0.3, turnSpeed = 0.08;
 float xTriangle = 119.0;
 int random = 0, score = 0;
-int positionMenu = 3;
-int selectColor = 1, randomselectcolor = 1;
+int positionMenu = 4;
+int selectColor = 1, randomselectcolor = 1, randommap = 1;
 int bufDistanceCar = 0;
 float znackX = 70;
 Player *playArray;
@@ -57,6 +57,7 @@ Player *playArray;
 char buffCar[20]="pics/blue.png";
 char buffRoad[20] = "pics/road3.png";
 char buffBonus[20] = "pics/50bonus.png";
+char buffMap[20] = "pics/grass5.png";
 
 Mix_Music *music = NULL;
 Mix_Chunk *fail = NULL;
@@ -97,6 +98,8 @@ void freeInitialise();
 void selectcolor();
 void selectcolorFail();
 void tableRecords();
+void selectmap();
+void helpcontrol();
 
 void Timer(int = 0) {
 	MainDraw();
@@ -114,7 +117,8 @@ int main(int argc, char**argv) {
 	glutSpecialFunc(specialKeyboard);
 	glutSpecialUpFunc(specialKeyboardUp);
 	glutKeyboardFunc(processNormalKeys);
-	glutTimerFunc(100, Timer, 0);
+	glutTimerFunc(90, Timer, 0);
+	glutSetCursor(GLUT_CURSOR_NONE);
 	glutMainLoop();
 	return 0;
 }
@@ -127,9 +131,9 @@ void Initialize()
 	glOrtho(0, WinWidth, 0, WinHeight, -320, 320);
 	glMatrixMode(GL_MODELVIEW);
 	glEnable(GL_ALPHA_TEST);
-	glGenTextures(16, textures);
+	glGenTextures(18, textures);
 	LoadTexture(buffCar, 0);
-	LoadTexture("pics/grass5.png", 1);
+	LoadTexture(buffMap, 1);
 	LoadTexture("pics/whitecolor.png", 2);
 	LoadTexture(buffRoad, 3);
 	LoadTexture("pics/mainbackground.png", 4);
@@ -144,6 +148,8 @@ void Initialize()
 	LoadTexture("pics/topfive.png", 13);
 	LoadTexture("pics/recordsMenu.png", 14);
 	LoadTexture("pics/RecodsTable.png", 15);
+	LoadTexture("pics/helpcontrol.png", 16);
+	LoadTexture("pics/control.png", 17);
 	srand(time(NULL));
 	Mix_OpenAudio(22050, AUDIO_S16SYS, 2, 4096);
 	music = Mix_LoadMUS("sound/t2.wav");
@@ -259,9 +265,11 @@ void MainDraw() {
 		if (menuSelectColorbool) {
 			menuSelectColor();
 		}
-		else
-			if (menuRecordsTable) {
+		if (menuRecordsTable) {
 			tableRecords();
+		}
+		if (menuHelpControl){
+			helpcontrol();
 		}
 	}
 	else {
@@ -286,18 +294,33 @@ void mainBackground() {
 		glBindTexture(GL_TEXTURE_2D, textures[5]);
 		glAlphaFunc(GL_GREATER, 0.8f);
 		glBegin(GL_QUADS);
+		if (positionMenu == 4) {
+			glColor3f(1, 0, 0);
+		}
+		else
+			glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2f(581.0, 228.0);   //New Game
+		glTexCoord2d(1, 0); glVertex2f(835.0, 228.0);
+		glTexCoord2d(1, 1); glVertex2f(835.0, 266.0);
+		glTexCoord2d(0, 1); glVertex2f(581.0, 266.0);
+		glEnd();
+
+		glBindTexture(GL_TEXTURE_2D, textures[15]);
+		glAlphaFunc(GL_GREATER, 0.8f);
+		glBegin(GL_QUADS);
 		if (positionMenu == 3) {
 			glColor3f(1, 0, 0);
 		}
 		else
 			glColor3f(1, 1, 1);
-		glTexCoord2d(0, 0); glVertex2f(581.0, 185.0);   //New Game
-		glTexCoord2d(1, 0); glVertex2f(835.0, 185.0);
-		glTexCoord2d(1, 1); glVertex2f(835.0, 233.0);
-		glTexCoord2d(0, 1); glVertex2f(581.0, 233.0);
+		
+		glTexCoord2d(0, 0); glVertex2f(509.0, 188.0); // Records Table
+		glTexCoord2d(1, 0); glVertex2f(835.0, 188.0);
+		glTexCoord2d(1, 1); glVertex2f(835.0, 221.0);
+		glTexCoord2d(0, 1); glVertex2f(509.0, 221.0);
 		glEnd();
 
-		glBindTexture(GL_TEXTURE_2D, textures[15]);
+		glBindTexture(GL_TEXTURE_2D, textures[17]);
 		glAlphaFunc(GL_GREATER, 0.8f);
 		glBegin(GL_QUADS);
 		if (positionMenu == 2) {
@@ -305,12 +328,13 @@ void mainBackground() {
 		}
 		else
 			glColor3f(1, 1, 1);
-		
-		glTexCoord2d(0, 0); glVertex2f(509.0, 136.0); // Records Table
+
+		glTexCoord2d(0, 0); glVertex2f(643.0, 136.0); // Control
 		glTexCoord2d(1, 0); glVertex2f(835.0, 136.0);
-		glTexCoord2d(1, 1); glVertex2f(835.0, 173.0);
-		glTexCoord2d(0, 1); glVertex2f(509.0, 173.0);
+		glTexCoord2d(1, 1); glVertex2f(835.0, 172.0);
+		glTexCoord2d(0, 1); glVertex2f(643.0, 172.0);
 		glEnd();
+
 
 		glBindTexture(GL_TEXTURE_2D, textures[6]);
 		glAlphaFunc(GL_GREATER, 0.8f);
@@ -330,15 +354,15 @@ void mainBackground() {
 			glBindTexture(GL_TEXTURE_2D, textures[7]);
 			glAlphaFunc(GL_GREATER, 0.8f);
 			glBegin(GL_QUADS);
-			if (positionMenu == 4) {
+			if (positionMenu == 5) {
 				glColor3f(1, 0, 0);
 			}
 			else
 				glColor3f(1, 1, 1);
-			glTexCoord2d(0, 0); glVertex2f(648.0, 250.0); //Resume
-			glTexCoord2d(1, 0); glVertex2f(835.0, 250.0);
-			glTexCoord2d(1, 1); glVertex2f(835.0, 287.0);
-			glTexCoord2d(0, 1); glVertex2f(648.0, 287.0);
+			glTexCoord2d(0, 0); glVertex2f(648.0, 270.0); //Resume
+			glTexCoord2d(1, 0); glVertex2f(835.0, 270.0);
+			glTexCoord2d(1, 1); glVertex2f(835.0, 307.0);
+			glTexCoord2d(0, 1); glVertex2f(648.0, 307.0);
 			glEnd();
 		}
 	}
@@ -380,9 +404,9 @@ void specialKeyboard(int key, int x, int y) {
 			Up = true;
 			downDistance = false;
 			if (!chooseGame) {
-				if (!menuSelectColorbool && !menuRecordsTable) {
+				if (!menuSelectColorbool && !menuRecordsTable && !menuHelpControl) {
 					Mix_PlayChannel(-1, chooisesound, 0);
-					if (positionMenu != 4) {
+					if (positionMenu != 5) {
 						positionMenu++;
 					}
 					else {
@@ -399,7 +423,7 @@ void specialKeyboard(int key, int x, int y) {
 		case GLUT_KEY_DOWN: {
 			Down = true;
 			if (!chooseGame) {
-				if (!menuSelectColorbool && !menuRecordsTable) {
+				if (!menuSelectColorbool && !menuRecordsTable && !menuHelpControl) {
 					Mix_PlayChannel(-1, chooisesound, 0);
 					if (positionMenu != 1) {
 						positionMenu--;
@@ -492,15 +516,19 @@ void processNormalKeys(unsigned char key, int x, int y) {
 				chooseGame = true;
 			}
 		}
-		if (positionMenu == 2) {
+		if (positionMenu == 2){
+			if (!chooseGame)
+				menuHelpControl = true;
+		}
+		if (positionMenu == 3) {
 			if (!chooseGame)
 				menuRecordsTable = true;
 		}
-		if (positionMenu == 3) {
+		if (positionMenu == 4) {
 			if(!chooseGame)
 			menuSelectColorbool = true;
 		}
-		if (positionMenu ==4) {
+		if (positionMenu ==5) {
 			if (homeMainResum) {
 				homeMainResum = false;
 				Mix_PlayMusic(music, -1);
@@ -513,21 +541,30 @@ void processNormalKeys(unsigned char key, int x, int y) {
 	case 27: {
 		if (chooseGame) {
 			Mix_PauseMusic();
-			positionMenu = 4;
+			positionMenu = 5;
 			homeMainResum = true;
 			chooseGame = false;
 			menuSelectColorbool = false;
 			menuRecordsTable = false;
+			menuHelpControl = false;
 		}
 		if (menuSelectColorbool) {
-			Mix_PauseMusic();
 			chooseGame = false;
 			menuSelectColorbool = false;
+			menuRecordsTable = false;
+			menuHelpControl = false;
 		}
 		if (menuRecordsTable) {
-			Mix_PauseMusic();
 			chooseGame = false;
 			menuRecordsTable = false;
+			menuSelectColorbool = false;
+			menuHelpControl = false;
+		}
+		if (menuHelpControl){
+			chooseGame = false;
+			menuRecordsTable = false;
+			menuSelectColorbool = false;
+			menuHelpControl = false;
 		}
 		break;
 	}
@@ -558,22 +595,24 @@ void processNormalKeys(unsigned char key, int x, int y) {
 
 void gamePlay() {
 	glLoadIdentity();
-	randomchikDlyaBonusa = rand() % 100+ 1;
+	randomchikDlyaBonusa = rand() % 10+ 1;
 	if (randomchikDlyaBonusa == 1) {
-		_50vs100 = rand() % 2 + 1;
-		if (_50vs100 == 1) {
-			strcpy(buffBonus, "pics/50bonus.png");
-			LoadTexture(buffBonus, 11);
-		}
-		if (_50vs100 == 2) {
-			strcpy(buffBonus, "pics/100bonus.png");
-			LoadTexture(buffBonus, 11);
+		if (checkrandombonus){
+			_50vs100 = rand() % 110 + 1;
+			if (_50vs100 == 1) {
+				strcpy(buffBonus, "pics/50bonus.png");
+				LoadTexture(buffBonus, 11);
+			}
+			if (_50vs100 == 2) {
+				strcpy(buffBonus, "pics/100bonus.png");
+				LoadTexture(buffBonus, 11);
+			}
 		}
 		bonus = true;
 	}
 	movddline -= speed*1.5;
 	distanceCar += abs(speed) * 0.09; // s=V*t
-	if (movddline < -3000)
+	if (movddline < -4000)
 	{
 		movddline = 0;
 		randomchikforznak = true;
@@ -588,7 +627,6 @@ void gamePlay() {
 	randomBarrier();
 	drawCar();
 	moveCar();
-	
 	char buffer[10];
 	glColor3f(1, 1, 1);
 	if (!collide) {
@@ -673,16 +711,19 @@ void restartgameplay()
 	 Mix_PlayMusic(music, -1);
 	 randomchikDlyaBonusa = 0;
 	 randomselectcolor = rand() % 6 + 1;
+	 randommap = rand() % 5 + 1;
 	 otherPositionBarrier();
 	 if (levelELH == 1) {
 		 alpha = 0.7;
 	 }
 	 if (levelELH == 2) {
-		 alpha = 1;
+		 alpha = 1.1;
 	 }
 	 if (levelELH == 3) {
-		 alpha = 1.5;
+		 alpha = 1.7;
 	 }
+	 loadmap = true;
+	 selectmap();
 	 failsound = false;
 	 collidewithCarSound = false;
 	 bonus = false;
@@ -759,7 +800,7 @@ void randomBarrier() {
 				collide = true;
 			}
 			if (bCarY[i] > mCarY - 95 && bCarY[i] < mCarY + 100 && abs(bCarX[i] - mCarX) == 116) {
-				if (speed>1 || speed<-1) {
+				if (speed>1 || speed<-1 && speed >-6) {
 					score++;
 				}
 				if (mCarX + 116 == bCarX[i]) {
@@ -913,7 +954,7 @@ void roadDraw() {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textures[1]);
 	glTranslatef(0, movddline, 0);
-	for (int i = -20; i < 30; i++) {
+	for (int i = -20; i < 40; i++) {
 		glBegin(GL_QUADS);
 		if (i % 2 == 0){
 		glTexCoord2d(0, 0); glVertex2f(0, 312*i/2);
@@ -934,7 +975,7 @@ void roadDraw() {
 	glAlphaFunc(GL_GREATER, 0.8f);
 	int k = 0;
 
-	for (int i = -12; i < 15; i++) {
+	for (int i = -12; i < 25; i++) {
 		glBegin(GL_QUADS);
 		if (i == 0) {
 			k = -100;
@@ -1008,7 +1049,7 @@ void bonusScore() {
 					bonusX = 582; bonusY = 700;
 					checkrandombonus = false;
 			}
-			if (bonusY > mCarY - 115 && bonusY < mCarY + 120 && bonusX == mCarX) {
+			if (bonusY > mCarY - 110 && bonusY < mCarY + 120 && bonusX == mCarX) {
 				if (_50vs100==1)
 					score += 50;
 				if(_50vs100==2)
@@ -1066,7 +1107,28 @@ void selectcolor()
 		strcpy(buffCar, "pics/red.png");
 	if (selectColor == 6)
 		strcpy(buffCar, "pics/gray.png");
-	LoadTexture(buffCar, 0);
+	if (!loadTexturebool) {
+		loadTexturebool = true;
+		LoadTexture(buffCar, 0);
+	}
+}
+
+ void selectmap()
+{
+	if (randommap == 1)
+		strcpy(buffCar, "pics/grass5.png");
+	if (randommap == 2)
+		strcpy(buffCar, "pics/dirt.png");
+	if (randommap == 3)
+		strcpy(buffCar, "pics/dry.jpg");
+	if (randommap == 4)
+		strcpy(buffCar, "pics/snow.png");
+	if (randommap == 5)
+		strcpy(buffCar, "pics/sand.jpg");
+	if (loadmap) {
+		LoadTexture(buffCar, 1);
+		loadTexturebool = false;
+	}
 }
 
 void selectcolorFail()
@@ -1083,7 +1145,10 @@ void selectcolorFail()
 		strcpy(buffCar, "pics/redfail.png");
 	if (selectColor == 6)
 		strcpy(buffCar, "pics/grayfail.png");
-	LoadTexture(buffCar, 0);
+	if (loadTexturebool) {
+		loadTexturebool = false;
+		LoadTexture(buffCar, 0);
+	}
 }
 
 void tableRecords()
@@ -1134,6 +1199,19 @@ void drawBonusScore(float bonusX, float bonusY) {
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 
+}
+
+void helpcontrol(){
+	glLoadIdentity();
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, textures[16]);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0, 0); glVertex2f(0.0, 0.0);
+	glTexCoord2d(1, 0); glVertex2f(WinWidth, 0.0);
+	glTexCoord2d(1, 1); glVertex2f(WinWidth, WinHeight);
+	glTexCoord2d(0, 1); glVertex2f(0.0, WinHeight);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
 }
 
 void drawTwenty(float XznT, float YznT)
